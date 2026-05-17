@@ -3,6 +3,6 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "echo \"Skipping root build\" && exit 0"
+    "build": "cd frontend && npm install && npm run build"
   }
 }
