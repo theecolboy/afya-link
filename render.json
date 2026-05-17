@@ -10,10 +10,6 @@
       "startCommand": "cd backend && npm run start",
       "envVars": [
         {
-          "key": "PORT",
-          "value": "5000"
-        },
-        {
           "key": "MONGO_URI",
           "value": "mongodb+srv://colboykenya_db_user:B4DXX!eGw38z_pa@cluster0.ywq1jwc.mongodb.net/?appName=Cluster0"
         },
