@@ -1,8 +1,9 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../services/api";
+import { register } from "../services/api";
 
-function Login() {
+function Signup() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -17,27 +18,36 @@ function Login() {
     }
   }, [navigate]);
 
-  const handleLogin = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setMessageType("error");
+      setMessage("Please fill in all fields.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await login({ email, password });
+      const response = await register({ name, email, password });
       if (response.token) {
         localStorage.setItem("token", response.token);
-        const userName = response.user?.name || email.split("@")[0];
-        localStorage.setItem("user", JSON.stringify({ name: userName, email }));
+        localStorage.setItem("user", JSON.stringify({ name: response.user.name, email: response.user.email }));
         setMessageType("success");
-        setMessage(`Welcome back, ${userName}! Redirecting...`);
-        setTimeout(() => {
-          navigate("/");
-        }, 800);
+        setMessage("Account created successfully. Redirecting...");
+        navigate("/");
+      } else if (response.message) {
+        setMessageType("success");
+        setMessage("Account created successfully. Please log in.");
+        setName("");
+        setEmail("");
+        setPassword("");
       } else {
         setMessageType("error");
-        setMessage(response.message || "Login failed. Please try again.");
+        setMessage(response.error || "Registration failed. Please try again.");
       }
     } catch (error) {
       setMessageType("error");
-      setMessage("Login error. Please try again.");
+      setMessage(error.message || "Registration error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -45,17 +55,27 @@ function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
-      <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
-        <h2 className="text-3xl font-bold mb-4 text-center text-slate-900">Login to AfyaLink</h2>
-        <p className="text-center text-sm text-slate-600 mb-6">Access your dashboard, create posts, and comment in the community.</p>
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-lg">
+        <h2 className="text-3xl font-bold text-center text-slate-900">Create Your Account</h2>
+        <p className="mt-3 text-center text-sm text-slate-600">Join AfyaLink to create posts, comment, and manage your health community.</p>
 
         {message && (
-          <div className={`mb-5 rounded-2xl p-4 text-center ${messageType === "success" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>
+          <div className={`mt-6 rounded-2xl p-4 text-center ${messageType === "success" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>
             {message}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSignup} className="mt-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Full Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
+              placeholder="Jane Doe"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">Email</label>
             <input
@@ -64,7 +84,6 @@ function Login() {
               onChange={(e) => setEmail(e.target.value)}
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
               placeholder="you@example.com"
-              required
             />
           </div>
           <div>
@@ -74,8 +93,7 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
-              placeholder="Enter your password"
-              required
+              placeholder="Choose a secure password"
             />
           </div>
           <button
@@ -83,16 +101,16 @@ function Login() {
             disabled={loading}
             className="w-full rounded-2xl bg-cyan-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-cyan-300"
           >
-            {loading ? "Signing in..." : "Login"}
+            {loading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-600">
-          Don't have an account? <Link to="/signup" className="font-semibold text-cyan-600 hover:text-cyan-700">Create one</Link>.
+          Already have an account? <Link to="/login" className="font-semibold text-cyan-600 hover:text-cyan-700">Log in</Link>
         </p>
       </div>
     </div>
   );
 }
 
-export default Login;
+export default Signup;

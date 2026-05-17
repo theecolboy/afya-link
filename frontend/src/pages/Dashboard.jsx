@@ -1,16 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const defaultPosts = [
-  {
-    id: 1,
-    title: "Healthy Living Tips",
-    content: "Share your favorite wellness habits and community health tips.",
-    comments: [
-      { id: 1, text: "Great advice! Staying hydrated is key." },
-    ],
-  },
-];
+import { getPosts, createPost, addComment as addCommentAPI } from "../services/api";
 
 const kenyaImages = [
   {
@@ -29,43 +19,47 @@ const kenyaImages = [
 
 function Dashboard() {
   const [user, setUser] = useState(null);
-  const [posts, setPosts] = useState(defaultPosts);
+  const [posts, setPosts] = useState([]);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [commentText, setCommentText] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    const storedPosts = localStorage.getItem("dashboardPosts");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-    if (storedPosts) {
-      try {
-        setPosts(JSON.parse(storedPosts));
-      } catch (err) {
-        setPosts(defaultPosts);
-      }
-    }
+    fetchPosts();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("dashboardPosts", JSON.stringify(posts));
-  }, [posts]);
+  const fetchPosts = async () => {
+    try {
+      const data = await getPosts();
+      setPosts(data);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+  };
 
-  const addPost = (e) => {
+  const addPost = async (e) => {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) return;
-    const nextId = posts.length ? Math.max(...posts.map((post) => post.id)) + 1 : 1;
-    const createdPost = {
-      id: nextId,
-      title: newTitle.trim(),
-      content: newContent.trim(),
-      comments: [],
-    };
-    setPosts([createdPost, ...posts]);
-    setNewTitle("");
-    setNewContent("");
+    
+    setLoading(true);
+    try {
+      const newPost = await createPost({
+        title: newTitle.trim(),
+        content: newContent.trim(),
+      });
+      setPosts([newPost, ...posts]);
+      setNewTitle("");
+      setNewContent("");
+    } catch (error) {
+      console.error("Error creating post:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const navigate = useNavigate();
@@ -76,22 +70,22 @@ function Dashboard() {
     navigate("/login");
   };
 
-  const addComment = (postId) => {
+  const handleAddComment = async (postId) => {
     const text = commentText[postId]?.trim();
     if (!text) return;
-    setPosts((currentPosts) =>
-      currentPosts.map((post) => {
-        if (post.id !== postId) return post;
-        const nextCommentId = post.comments.length
-          ? Math.max(...post.comments.map((comment) => comment.id)) + 1
-          : 1;
-        return {
-          ...post,
-          comments: [...post.comments, { id: nextCommentId, text }],
-        };
-      })
-    );
-    setCommentText((current) => ({ ...current, [postId]: "" }));
+    
+    try {
+      const updatedPost = await addCommentAPI(postId, { text });
+      setPosts((currentPosts) =>
+        currentPosts.map((post) => {
+          const currentId = post._id || post.id;
+          return currentId === postId ? updatedPost : post;
+        })
+      );
+      setCommentText((current) => ({ ...current, [postId]: "" }));
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
   };
 
   return (
@@ -254,39 +248,44 @@ function Dashboard() {
           <section className="space-y-6 rounded-[2rem] bg-white p-6 shadow-xl">
             <h2 className="text-2xl font-semibold text-slate-900">Community posts</h2>
             <div className="space-y-6">
-              {posts.map((post) => (
-                <div key={post.id} className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h3 className="text-xl font-semibold text-slate-900">{post.title}</h3>
-                    <span className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm">{post.comments.length} comment{post.comments.length !== 1 ? "s" : ""}</span>
-                  </div>
-                  <p className="mt-4 text-slate-700">{post.content}</p>
+              {posts.map((post) => {
+                const postId = post._id || post.id;
+                return (
+                  <div key={postId} className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <h3 className="text-xl font-semibold text-slate-900">{post.title}</h3>
+                      <span className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm">
+                        {post.comments.length} comment{post.comments.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <p className="mt-4 text-slate-700">{post.content}</p>
 
-                  <div className="mt-5 space-y-4">
-                    {post.comments.map((comment) => (
-                      <div key={comment.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <p className="text-slate-700">{comment.text}</p>
-                      </div>
-                    ))}
-                  </div>
+                    <div className="mt-5 space-y-4">
+                      {post.comments.map((comment) => (
+                        <div key={comment._id || comment.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                          <p className="text-slate-700">{comment.text}</p>
+                        </div>
+                      ))}
+                    </div>
 
-                  <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <input
-                      value={commentText[post.id] || ""}
-                      onChange={(e) => setCommentText((current) => ({ ...current, [post.id]: e.target.value }))}
-                      placeholder="Add a comment..."
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => addComment(post.id)}
-                      className="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                    >
-                      Comment
-                    </button>
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <input
+                        value={commentText[postId] || ""}
+                        onChange={(e) => setCommentText((current) => ({ ...current, [postId]: e.target.value }))}
+                        placeholder="Add a comment..."
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddComment(postId)}
+                        className="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                      >
+                        Comment
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}

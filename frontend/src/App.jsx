@@ -7,6 +7,8 @@ import Telemedicine from "./pages/Telemedicine";
 import Wellness from "./pages/Wellness";
 import Insurance from "./pages/Insurance";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Logout from "./pages/Logout";
 import Sidebar from "./components/Sidebar";
 
 const isAuthenticated = () => Boolean(localStorage.getItem("token"));
@@ -24,6 +26,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+        <Route path="/logout" element={<Logout />} />
         <Route
           path="/"
           element={

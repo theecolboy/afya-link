@@ -1,0 +1,36 @@
+{
+  "services": [
+    {
+      "name": "afyalink-backend",
+      "type": "web_service",
+      "env": "node",
+      "region": "oregon",
+      "plan": "free",
+      "buildCommand": "cd backend && npm install",
+      "startCommand": "cd backend && npm run start",
+      "envVars": [
+        {
+          "key": "PORT",
+          "value": "5000"
+        },
+        {
+          "key": "MONGO_URI",
+          "value": "mongodb://localhost:27017/afyalink"
+        },
+        {
+          "key": "JWT_SECRET",
+          "value": "afyalinksecret"
+        }
+      ]
+    },
+    {
+      "name": "afyalink-frontend",
+      "type": "static_site",
+      "env": "static",
+      "region": "oregon",
+      "plan": "free",
+      "buildCommand": "cd frontend && npm install && npm run build",
+      "publishPath": "frontend/dist"
+    }
+  ]
+}

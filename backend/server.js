@@ -15,13 +15,18 @@ connectDB().then(() => {
 
   const authRoutes = require("./routes/authRoutes");
   const appointmentRoutes = require("./routes/appointmentRoutes");
+  const postRoutes = require("./routes/postRoutes");
 
   app.use("/api/auth", authRoutes);
   app.use("/api/appointments", appointmentRoutes);
+  app.use("/api/posts", postRoutes);
 
   const PORT = process.env.PORT || 5000;
 
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  app.listen(PORT, function () {
+    console.log("Server running on port " + PORT);
   });
+}).catch(function (err) {
+  console.log("Server startup error:", err.message);
+  process.exit(1);
 });
