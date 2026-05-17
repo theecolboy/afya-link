@@ -3,4 +3,12 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  base: '/',
+  define: {
+    __API_URL__: JSON.stringify(
+      import.meta.env.BUILD
+        ? (import.meta.env.VITE_API_URL || '/api')
+        : undefined
+    ),
+  },
 })
