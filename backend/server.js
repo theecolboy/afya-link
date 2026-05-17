@@ -29,6 +29,12 @@ app.get("/", (req, res) => {
 
 const start = async () => {
   try {
+    console.log("Backend startup env check:", {
+      MONGO_URI: !!process.env.MONGO_URI,
+      JWT_SECRET: !!process.env.JWT_SECRET,
+      PORT: !!process.env.PORT,
+    });
+
     await connectDB();
 
     const PORT = process.env.PORT || 5000;
