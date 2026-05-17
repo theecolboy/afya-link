@@ -15,7 +15,7 @@
         },
         {
           "key": "MONGO_URI",
-          "value": "mongodb://localhost:27017/afyalink"
+          "value": "mongodb+srv://colboykenya_db_user:B4DXX!eGw38z_pa@cluster0.ywq1jwc.mongodb.net/?appName=Cluster0"
         },
         {
           "key": "JWT_SECRET",
